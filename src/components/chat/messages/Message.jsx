@@ -1,47 +1,51 @@
-import moment from "moment";
+import React from 'react';
 import TraingleIcon from "../../../svg/triangle";
 
-const Message = ({message,me}) => {
+const Message = ({ message, me }) => {
     return (
-        <div
-            className={`w-full flex mt-2 space-x-3 max-w-xs ${
-            me ? "ml-auto justify-end " : ""
-            }`}
-        >
-            {/*Message Container*/}
+        <div className={`w-full flex mt-2 space-x-3 max-w-xs z-10 ${me ? "ml-auto justify-end " : ""}`}>
             <div className="relative">
-            {/* sender user message */}
-            {!me && message.conversation.isGroup && (
-                <div className="absolute top-0.5 left-[-37px]">
-                <img
-                    src={message.sender.picture}
-                    alt=""
-                    className="w-8 h-8 rounded-full"
-                />
+                <div className={`relative h-full dark:text-dark_text_1 p-2 rounded-lg shadow-sm
+                    ${me ? "bg-green_3" : "dark:bg-dark_bg_2"}
+                `}>
+                    
+                    {/* If message is deleted */}
+                    {message.isDeleted ? (
+                        <p className="italic text-gray-500 text-sm pb-4 pr-8">🚫 This message was deleted</p>
+                    ) : (
+                        <>
+                            {/* Check if there is an image or video URL */}
+                            {message.fileUrl && message.fileType?.includes('image') && (
+                                <img src={message.fileUrl} alt="attachment" className="max-w-[200px] rounded-lg mb-2" />
+                            )}
+                            {message.fileUrl && message.fileType?.includes('video') && (
+                                <video src={message.fileUrl} controls className="max-w-[200px] rounded-lg mb-2" />
+                            )}
+                            {message.fileUrl && !message.fileType?.includes('image') && !message.fileType?.includes('video') && (
+                                <a href={message.fileUrl} target="_blank" rel="noreferrer" className="text-blue-500 underline block mb-2">Download File</a>
+                            )}
+
+                            {/* Message Text */}
+                            {message.text && message.text !== 'Photo' && message.text !== 'Video' && (
+                                <p className="float-left h-full text-sm pb-4 pr-8">
+                                    {message.text}
+                                </p>
+                            )}
+                        </>
+                    )}
+
+                    {/* Timestamp */}
+                    <span className="absolute right-1.5 bottom-1.5 text-[10px] text-dark_text_5 leading-none">
+                        {message.time} {message.isEdited ? "(Edited)" : ""}
+                    </span>
+
+                    {/* Triangle Indicator */}
+                    {!me ? (
+                        <span><TraingleIcon className="dark:fill-dark_bg_2 rotate-[60deg] absolute top-[-5px] -left-1.5" /></span>
+                    ) : (
+                        <span><TraingleIcon className="fill-green_3 rotate-[60deg] absolute top-[-5px] -right-2" /></span>
+                    )}
                 </div>
-            )}
-            <div
-                className={`relative h-full dark:text-dark_text_1 p-2 rounded-lg
-            ${me ? "bg-green_3" : "dark:bg-dark_bg_2"}
-            `}
-            >
-                {/*Message*/}
-                <p className="float-left h-full text-sm pb-4 pr-8">
-                {message.message}
-                </p>
-                {/*Message Date*/}
-                <span className="absolute right-1.5 bottom-1.5 text-xs text-dark_text_5 leading-none">
-                {moment(message.createdAt).format("HH:mm")}
-                </span>
-                {/*Traingle*/}
-                {!me ? (
-                <span>
-                     <TraingleIcon className="dark:fill-dark_bg_2 rotate-[60deg] absolute top-[-5px] -left-1.5" />
-                </span>
-                ) : <span>
-                <TraingleIcon className="fill-green_3 rotate-[60deg] absolute top-[-5px] -right-2" />
-           </span>}
-            </div>
             </div>
         </div>
     );
