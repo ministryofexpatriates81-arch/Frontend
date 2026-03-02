@@ -1,4 +1,4 @@
-import {BrowserRouter as Router,Routes,Route, Navigate} from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 
 //Pages import
 import Home from "./pages/home";
@@ -6,26 +6,32 @@ import Login from "./pages/login";
 import Register from "./pages/register";
 
 import { io } from 'socket.io-client';
-import { useEffect } from 'react';
 import SocketContext from './context/SocketContext';
 import { useSelector } from 'react-redux';
 
-const socket=io(process.env.REACT_APP_API_ENDPOINT.split('/api/v1')[0]);
-
+// API লিংকটি ঠিকমতো না পেলে যেন সাইট ক্র্যাশ না করে, তার জন্য সেফটি দেওয়া হলো
+const apiEndpoint = process.env.REACT_APP_API_ENDPOINT || '';
+const socketUrl = apiEndpoint ? apiEndpoint.split('/api/v1')[0] : 'http://localhost:5000'; // আপনার ব্যাকএন্ড লিংক না পেলে লোকালহোস্ট ধরবে
+const socket = io(socketUrl);
 
 function App() {
+  // User ডেটা না থাকলে যেন ক্র্যাশ না করে, সেজন্য optional chaining (?.) ব্যবহার করা হলো
+  const user = useSelector((state) => state.user?.user); 
+  const token = user?.token;
 
-  const {user} = useSelector((state) => state.user);
-  const {token} = user;
-  console.log(token);
+  console.log("Token:", token);
+
   return (
     <div className='dark'>
       <SocketContext.Provider value={socket}>
-        <Router>
+        {/* গিটহাব পেজেসের জন্য basename="/Frontend" যুক্ত করা হলো */}
+        <Router basename="/Frontend">
           <Routes>
             <Route exact path="/" element={token ? <Home socket={socket}/> : <Navigate to="/login"/>} />
-            <Route exact path="/login" element={token ? <Login/> : <Navigate to="/"/>} />
-            <Route exact path="/register" element={<Register/>} />
+            
+            {/* লগিন লজিক ঠিক করা হলো (!token) */}
+            <Route exact path="/login" element={!token ? <Login/> : <Navigate to="/"/>} />
+            <Route exact path="/register" element={!token ? <Register/> : <Navigate to="/"/>} />
           </Routes>
           <div className='dark'></div>
         </Router>
