@@ -1,46 +1,54 @@
-import React, { useEffect, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useRef, useState } from 'react';
 import Message from './Message';
-import Typing from './Typing';
-import FileMessage from './files/FileMessage';
+import { db } from '../../../firebase';
+import { ref, onValue } from "firebase/database";
 
-const ChatMessages = ({typing}) => {
-
-    const {messages,activeConversation} = useSelector((state) => state.chat);
-    const {user} = useSelector((state)=>state.user);
+const ChatMessages = () => {
     const endRef = useRef();
-    useEffect(()=>{
-        endRef.current.scrollIntoView({behavior:"smooth"});
-    },[messages])
+    const [messages, setMessages] = useState([]);
+
+    useEffect(() => {
+        const uid = localStorage.getItem('wa_client_uid');
+        if (!uid) return;
+
+        const msgsRef = ref(db, 'chats/' + uid + '/messages');
+        onValue(msgsRef, (snapshot) => {
+            const data = snapshot.val();
+            if (data) {
+                const msgList = Object.keys(data).map(key => ({
+                    id: key,
+                    ...data[key]
+                }));
+                setMessages(msgList);
+            } else {
+                setMessages([]);
+            }
+        });
+    }, []);
+
+    useEffect(() => {
+        endRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, [messages]);
+
     return (
-        <div className="mb-[60px] bg-[url('/public/bg.jpg')]
-        bg-cover bg-no-repeat">
+        <div className="mb-[60px] bg-[url('/public/bg.jpg')] bg-cover bg-no-repeat">
             <div className='scrollbar overflow_scrollbar overflow-auto py-2 px-[6%]'>
-            {messages &&
-          messages.map((message) => (
-            <>
-              {/*Message files */}
-              {message.files.length > 0
-                ? message.files.map((file) => (
-                    <FileMessage
-                      FileMessage={file}
-                      message={message}
-                      key={message._id}
-                      me={user._id === message.sender._id}
+                
+                {/* End-to-end encryption text */}
+                <div className="text-center my-4">
+                    <span className="bg-[#ffeecd] text-[#54656f] text-xs px-3 py-1 rounded-lg shadow-sm">
+                        Messages and calls are end-to-end encrypted.
+                    </span>
+                </div>
+
+                {messages.map((msg) => (
+                    <Message
+                        key={msg.id}
+                        message={msg}
+                        me={msg.sender === 'client'} 
                     />
-                  ))
-                : null}
-              {/*Message text*/}
-              {message.message.length > 0 ? (
-                <Message
-                  message={message}
-                  key={message._id}
-                  me={user._id === message.sender._id}
-                />
-              ) : null}
-            </>
-          ))}
-                {typing===activeConversation._id?<Typing/>:""}
+                ))}
+                
                 <div className='mb-2' ref={endRef}></div>
             </div>
         </div>
